@@ -1,6 +1,7 @@
-# Import necessary libraries
-import telebot
+import re
+import email
 from imapclient import IMAPClient
+import telebot
 
 # Telegram Bot token
 TELEGRAM_TOKEN = '7026916796:AAGXGQPaUbAWXjnP3LlVtSZbDuys2BQ_pSM'
@@ -13,6 +14,7 @@ EMAIL_PASSWORD = 'cmxs wftp rgkf twne'
 # Initialize the Telegram Bot
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
+
 # Function to search for the latest email associated with the provided email address
 def search_latest_email(email_address):
     with IMAPClient(EMAIL_HOST) as server:
@@ -23,10 +25,25 @@ def search_latest_email(email_address):
             # Fetch the latest email
             latest_email_id = messages[-1]
             email_data = server.fetch(latest_email_id, ['BODY[]'])
-            email_body = email_data[latest_email_id][b'BODY[]'].decode('utf-8')
-            return email_body
+            email_body = email_data[latest_email_id][b'BODY[]']
+            return extract_main_message(email_body)
         else:
             return None
+
+
+# Function to extract the main message from the email content
+def extract_main_message(email_body):
+    msg = email.message_from_bytes(email_body)
+    main_message = ''
+    if msg.is_multipart():
+        for part in msg.walk():
+            content_type = part.get_content_type()
+            if content_type == 'text/plain':
+                main_message += part.get_payload(decode=True).decode('utf-8', 'ignore').strip() + '\n'
+    else:
+        main_message = msg.get_payload(decode=True).decode('utf-8', 'ignore').strip()
+    return main_message
+
 
 # Handler for /search command with email address
 @bot.message_handler(commands=['search'])
@@ -38,12 +55,10 @@ def search_command_with_email(message):
     email_content = search_latest_email(mail)
 
     if email_content:
-        # Split the email content into smaller chunks of 4096 characters (Telegram message length limit)
-        chunks = [email_content[i:i + 4096] for i in range(0, len(email_content), 4096)]
-        for chunk in chunks:
-            bot.reply_to(message, f"Latest email for {mail}:\n{chunk}")
+        bot.reply_to(message, f"Latest email for {mail}:\n{email_content}")
     else:
         bot.reply_to(message, f"No email found for {mail}.")
+
 
 # Start the bot
 bot.polling()

@@ -65,12 +65,10 @@ def extract_main_message(msg):
 
 # Function to extract company name from email content
 def extract_company_name(content):
-    # Search for keywords related to company name
-    keywords = ['registration', 'Internship']
-    for keyword in keywords:
-        match = re.search(rf'\b{keyword}\b\s+of\s+(.+?)\s+', content, re.IGNORECASE)
-        if match:
-            return match.group(1)
+    # Search for specific phrase related to company name
+    match = re.search(r'(?:registration\s+of\s+)(.+?)(?:\s+for\s+\d{4}\s+batch)', content, re.IGNORECASE)
+    if match:
+        return match.group(1)
     return "Unknown Company"
 
 
@@ -88,7 +86,7 @@ def extract_deadline(content):
 # Handler for /search command
 @bot.message_handler(commands=['refresh'])
 def search_command(message):
-    mail = "prafullsonawane8370@gmail.com"  # Specify the email address to search for
+    mail = "noreply_tpoerp@vit.edu"  # Specify the email address to search for
     email_details = search_latest_email(mail)
     if email_details:
         bot.reply_to(message, email_details)

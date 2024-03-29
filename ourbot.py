@@ -4,6 +4,7 @@ from imapclient import IMAPClient
 import telebot
 from dotenv import load_dotenv
 import os
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
@@ -38,14 +39,11 @@ def search_latest_email(email_address):
 # Function to extract the email details
 def extract_email_details(email_body):
     msg = email.message_from_bytes(email_body)
-    sender_match = re.search(r'From: (.+?) <', msg.get("From"))
-    sender = sender_match.group(1) if sender_match else "Unknown Sender"
+    sender = msg.get("From")
     date = msg.get("Date")
     content = extract_main_message(msg)
-    company_name_match = re.search(r'registration of (.+?) Internship', content, re.IGNORECASE)
-    company_name = company_name_match.group(1) if company_name_match else "Unknown Company"
-    deadline_match = re.search(r'Deadline : (.+?)\n', content)
-    deadline = deadline_match.group(1) if deadline_match else "Unknown Deadline"
+    company_name = extract_company_name(content)
+    deadline = extract_deadline(content)
     return f"Sender: {sender}\nDate: {date}\nCompany Name: {company_name}\nDeadline: {deadline}"
 
 
@@ -57,15 +55,40 @@ def extract_main_message(msg):
             content_type = part.get_content_type()
             if content_type == 'text/plain':
                 main_message += part.get_payload(decode=True).decode('utf-8', 'ignore').strip() + '\n'
+            elif content_type == 'text/html':
+                soup = BeautifulSoup(part.get_payload(decode=True).decode('utf-8', 'ignore'), 'html.parser')
+                main_message += soup.get_text().strip() + '\n'
     else:
         main_message = msg.get_payload(decode=True).decode('utf-8', 'ignore').strip()
     return main_message
 
 
+# Function to extract company name from email content
+def extract_company_name(content):
+    # Search for keywords related to company name
+    keywords = ['registration', 'Internship']
+    for keyword in keywords:
+        match = re.search(rf'\b{keyword}\b\s+of\s+(.+?)\s+', content, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return "Unknown Company"
+
+
+# Function to extract deadline from email content
+def extract_deadline(content):
+    # Search for keywords related to deadline
+    keywords = ['deadline', 'Deadline']
+    for keyword in keywords:
+        match = re.search(rf'{keyword}\s*:\s*(.+?)(?:\n|$)', content)
+        if match:
+            return match.group(1)
+    return "Unknown Deadline"
+
+
 # Handler for /search command
-@bot.message_handler(commands=['search'])
+@bot.message_handler(commands=['refresh'])
 def search_command(message):
-    mail = "prafull.sonawane21@vit.edu"  # Specify the email address to search for
+    mail = "prafullsonawane8370@gmail.com"  # Specify the email address to search for
     email_details = search_latest_email(mail)
     if email_details:
         bot.reply_to(message, email_details)

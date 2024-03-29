@@ -2,14 +2,17 @@ import re
 import email
 from imapclient import IMAPClient
 import telebot
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 # Telegram Bot token
-TELEGRAM_TOKEN = '7026916796:AAGXGQPaUbAWXjnP3LlVtSZbDuys2BQ_pSM'
+TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 
 # Email account credentials
-EMAIL_HOST = 'imap.gmail.com'
-EMAIL_USERNAME = 'snehashishmulgir221@gmail.com'
-EMAIL_PASSWORD = 'cmxs wftp rgkf twne'
+EMAIL_HOST = os.environ["EMAIL_HOST"]
+EMAIL_USERNAME = os.environ["EMAIL_USERNAME"]
+EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
 
 # Initialize the Telegram Bot
 bot = telebot.TeleBot(TELEGRAM_TOKEN)

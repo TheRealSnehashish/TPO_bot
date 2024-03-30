@@ -19,6 +19,7 @@ EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
 # Initialize the Telegram Bot
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
+# =======================================================================================================================
 
 # Function to search for the latest email associated with the provided email address
 def search_latest_email(email_address):
@@ -86,10 +87,20 @@ def extract_deadline(content):
             return match.group(1)
     return "Unknown Deadline"
 
+# ============================================================================================================
+
 # Start Program
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.reply_to(message, '''Welcome here, just follow these command to get insights \n/help : Get More info \n/refresh : Refresh the bot \n/verify : Get verify yourself to stay updated''')
+
+@bot.message_handler(commands=['help'])
+def help(message):
+    pass
+
+@bot.message_handler(commands=['verify'])
+def verify(message):
+    pass
 
 # Handler for /refresh command
 @bot.message_handler(commands=['refresh'])
@@ -101,6 +112,7 @@ def search_command(message):
     else:
         bot.reply_to(message, f"No email found from {mail}.")
 
+# =====================================================================================================================
 
 if __name__ == "__main__":
     # Start the bot

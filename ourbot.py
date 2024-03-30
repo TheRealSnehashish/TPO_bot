@@ -2,17 +2,17 @@ import re
 import email
 from imapclient import IMAPClient
 import telebot
-from dotenv import load_dotenv
 import os
 from bs4 import BeautifulSoup
 
+from dotenv import load_dotenv
 load_dotenv()
 
 # Telegram Bot token
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 
 # Email account credentials
-EMAIL_HOST = os.environ["EMAIL_HOST"]
+EMAIL_HOST = 'imap.gmail.com'
 EMAIL_USERNAME = os.environ["EMAIL_USERNAME"]
 EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
 
@@ -54,19 +54,23 @@ def extract_main_message(msg):
         for part in msg.walk():
             content_type = part.get_content_type()
             if content_type == 'text/plain':
-                main_message += part.get_payload(decode=True).decode('utf-8', 'ignore').strip() + '\n'
+                main_message += part.get_payload(decode=True).decode(
+                    'utf-8', 'ignore').strip() + '\n'
             elif content_type == 'text/html':
-                soup = BeautifulSoup(part.get_payload(decode=True).decode('utf-8', 'ignore'), 'html.parser')
+                soup = BeautifulSoup(part.get_payload(
+                    decode=True).decode('utf-8', 'ignore'), 'html.parser')
                 main_message += soup.get_text().strip() + '\n'
     else:
-        main_message = msg.get_payload(decode=True).decode('utf-8', 'ignore').strip()
+        main_message = msg.get_payload(
+            decode=True).decode('utf-8', 'ignore').strip()
     return main_message
 
 
 # Function to extract company name from email content
 def extract_company_name(content):
     # Search for specific phrase related to company name
-    match = re.search(r'(?:registration\s+of\s+)(.+?)(?:\s+for\s+\d{4}\s+batch)', content, re.IGNORECASE)
+    match = re.search(
+        r'(?:registration\s+of\s+)(.+?)(?:\s+for\s+\d{4}\s+batch)', content, re.IGNORECASE)
     if match:
         return match.group(1)
     return "Unknown Company"
@@ -82,8 +86,12 @@ def extract_deadline(content):
             return match.group(1)
     return "Unknown Deadline"
 
+# Start Program
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.reply_to(message, '''Welcome here, just follow these command to get insights \n/help : Get More info \n/refresh : Refresh the bot \n/verify : Get verify yourself to stay updated''')
 
-# Handler for /search command
+# Handler for /refresh command
 @bot.message_handler(commands=['refresh'])
 def search_command(message):
     mail = "noreply_tpoerp@vit.edu"  # Specify the email address to search for
@@ -94,5 +102,7 @@ def search_command(message):
         bot.reply_to(message, f"No email found from {mail}.")
 
 
-# Start the bot
-bot.polling()
+if __name__ == "__main__":
+    # Start the bot
+    print("Bot started....")
+    bot.polling()
